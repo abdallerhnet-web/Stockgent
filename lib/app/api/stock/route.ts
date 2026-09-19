@@ -6,6 +6,10 @@ export const dynamic = "force-dynamic";
 const TTL_MS = 15_000;
 let cache: { data: StockData; at: number } | null = null;
 
+type StockErrorResponse = StockData & {
+  error: string;
+};
+
 export async function GET() {
   // Explicit, opt-in demo mode for local development only.
   if (process.env.STOCKGENT_DEMO_MODE === "true") {
@@ -43,19 +47,18 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json(
-      {
-        symbol: "NVDA",
-        name: "NVIDIA Stock Token",
-        price: 0,
-        isLive: false,
-        updatedAt: new Date().toISOString(),
-        error: "Live NVDA price temporarily unavailable",
-      },
-      {
-        status: 502,
-        headers: { "Cache-Control": "no-store" },
-      }
-    );
+    const errorResponse: StockErrorResponse = {
+      symbol: "NVDA",
+      name: "NVIDIA Stock Token",
+      price: 0,
+      isLive: false,
+      updatedAt: new Date().toISOString(),
+      error: "Live NVDA price temporarily unavailable",
+    };
+
+    return NextResponse.json(errorResponse, {
+      status: 502,
+      headers: { "Cache-Control": "no-store" },
+    });
   }
 }
