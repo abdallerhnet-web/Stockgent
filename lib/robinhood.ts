@@ -49,7 +49,11 @@ export async function fetchNvda(): Promise<StockData> {
   );
   if (!asset) throw new Error(`${SYMBOL} not found in /assets`);
 
-  const quote: Quote = pricesRes.quotes?.[0] ?? pricesRes;
+  const quote: Quote =
+    Array.isArray(pricesRes?.quotes) && pricesRes.quotes.length > 0
+      ? pricesRes.quotes[0]
+      : (pricesRes ?? {});
+
   const bid = Number(quote.bid);
   const ask = Number(quote.ask);
   const multiplier = Number(asset.currentMultiplier);
@@ -58,7 +62,8 @@ export async function fetchNvda(): Promise<StockData> {
   if (!(multiplier > 0)) throw new Error("Invalid multiplier");
 
   const deployment =
-    (asset.deployments ?? []).find((d) => d.chainId === CHAIN_ID) ?? (asset.deployments ?? [])[0];
+    (asset.deployments ?? []).find((d) => d.chainId === CHAIN_ID) ??
+    (asset.deployments ?? [])[0];
 
   return {
     symbol: SYMBOL,
@@ -75,6 +80,9 @@ export async function fetchTokenList(): Promise<TokenItem[]> {
   const res = await getJson("/assets");
   const items: TokenItem[] = (res.assets ?? [])
     .filter((a: Asset) => a.tokenSymbol)
-    .map((a: Asset) => ({ symbol: String(a.tokenSymbol), name: String(a.tokenName ?? a.tokenSymbol) }));
+    .map((a: Asset) => ({
+      symbol: String(a.tokenSymbol),
+      name: String(a.tokenName ?? a.tokenSymbol),
+    }));
   return items.sort((a, b) => a.symbol.localeCompare(b.symbol));
-    }
+}
